@@ -4,6 +4,7 @@ import { SLUG_RE, createMeta, normalizeTags, fileProtocolHint } from './utils.js
 
 const SITE_NAME = 'My Blog';
 const article = document.getElementById('post');
+const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
 
 function showError(message) {
   const text = document.createElement('p');
@@ -55,6 +56,15 @@ async function init() {
 
   article.replaceChildren(header, body);
   document.title = `${title} | ${SITE_NAME}`;
+
+  // 로컬 서버에서만 네이버용 복사 도구를 붙입니다(공개 블로그에는 보이지 않음).
+  if (LOCAL_HOSTS.has(location.hostname)) {
+    import('./naver.js')
+      .then(({ mountNaverTools }) => {
+        mountNaverTools(header, { title, tags: normalizeTags(meta.tags), html });
+      })
+      .catch((error) => console.error('네이버 복사 도구를 불러오지 못했습니다:', error));
+  }
 
   // 주소에 #앵커가 있으면 렌더링 후 해당 제목으로 이동합니다.
   if (location.hash) {
